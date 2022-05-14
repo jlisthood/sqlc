@@ -164,7 +164,7 @@ var pqtypeTypes = map[string]struct{}{
 func buildImports(settings *plugin.Settings, queries []Query, uses func(string) bool) (map[string]struct{}, map[ImportSpec]struct{}) {
 	pkg := make(map[ImportSpec]struct{})
 	std := make(map[string]struct{})
-
+	fmt.Printf("building imports")
 	if uses("sql.Null") {
 		std["database/sql"] = struct{}{}
 	}

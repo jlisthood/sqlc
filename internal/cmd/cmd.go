@@ -20,6 +20,7 @@ import (
 )
 
 func init() {
+	fmt.Printf("ahh im testing")
 	uploadCmd.Flags().BoolP("dry-run", "", false, "dump upload request (default: false)")
 }
 
