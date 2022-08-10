@@ -33,9 +33,7 @@ package {{.Package}}
 import (
 	{{range imports .SourceName}}
 	{{range .}}{{.}}
-    {{end}}{{end}}{{ if ne .ModelPackage ""}}
-      "{{- .ModelPackage}}"
-    {{end}}
+    {{end}}{{end}}
 )
 
 {{template "interfaceCode" . }}
@@ -156,9 +154,7 @@ package {{.Package}}
 import (
 	{{range imports .SourceName}}
 	{{range .}}{{.}}
-	{{end}}{{end}}{{ if ne .ModelPackage ""}}
-      "{{- .ModelPackage}}"
-    {{end}}
+	{{end}}{{end}}
 )
 
 {{template "queryCode" . }}
@@ -205,9 +201,7 @@ package {{.Package}}
 import (
 	{{range imports .SourceName}}
 	{{range .}}{{.}}
-	{{end}}{{end}}{{ if ne .ModelPackage ""}}
-      "{{- .ModelPackage}}"
-    {{end}}
+	{{end}}{{end}}
 )
 {{template "batchCode" . }}
 {{end}}

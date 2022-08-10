@@ -280,16 +280,20 @@ func postgresType(req *plugin.CodeGenRequest, col *plugin.Column) string {
 
 			for _, enum := range schema.Enums {
 				if rel.Name == enum.Name && rel.Schema == schema.Name {
+					var prefix string
+					if req.Settings.Go.ModelPackage != "" {
+						prefix = sdk.PackageName(req.Settings.Go.ModelPackage) + "."
+					}
 					if notNull {
 						if schema.Name == req.Catalog.DefaultSchema {
-							return StructName(enum.Name, req.Settings)
+							return prefix + StructName(enum.Name, req.Settings)
 						}
-						return StructName(schema.Name+"_"+enum.Name, req.Settings)
+						return prefix + StructName(schema.Name+"_"+enum.Name, req.Settings)
 					} else {
 						if schema.Name == req.Catalog.DefaultSchema {
-							return "Null" + StructName(enum.Name, req.Settings)
+							return prefix + "Null" + StructName(enum.Name, req.Settings)
 						}
-						return "Null" + StructName(schema.Name+"_"+enum.Name, req.Settings)
+						return prefix + "Null" + StructName(schema.Name+"_"+enum.Name, req.Settings)
 					}
 				}
 			}

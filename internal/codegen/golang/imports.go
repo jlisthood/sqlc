@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kyleconroy/sqlc/internal/codegen/sdk"
 	"github.com/kyleconroy/sqlc/internal/metadata"
 	"github.com/kyleconroy/sqlc/internal/plugin"
 )
@@ -230,6 +231,12 @@ func buildImports(settings *plugin.Settings, queries []Query, uses func(string) 
 		pkg[ImportSpec{Path: "github.com/google/uuid"}] = struct{}{}
 	}
 
+	if settings.Go.ModelPackage != "" {
+		if uses(sdk.PackageName(settings.Go.ModelPackage)) {
+			pkg[ImportSpec{Path: settings.Go.ModelPackage}] = struct{}{}
+		}
+	}
+
 	// Custom imports
 	for _, o := range settings.Overrides {
 		if o.GoType.BasicType || o.GoType.TypeName == "" {
@@ -250,6 +257,8 @@ func (i *importer) interfaceImports() fileImports {
 		for _, q := range i.Queries {
 			if q.hasRetType() {
 				if strings.HasPrefix(q.Ret.Type(), name) {
+					return true
+				} else if strings.HasPrefix(q.Ret.DefineType(), name) {
 					return true
 				}
 			}
@@ -313,6 +322,12 @@ func (i *importer) queryImports(filename string) fileImports {
 	std, pkg := buildImports(i.Settings, gq, func(name string) bool {
 		for _, q := range gq {
 			if q.hasRetType() {
+				if q.Ret.Struct != nil {
+					fName := strings.TrimPrefix(q.Ret.Struct.FullName(), "[]")
+					if strings.HasPrefix(fName, name) {
+						return true
+					}
+				}
 				if q.Ret.EmitStruct() {
 					for _, f := range q.Ret.Struct.Fields {
 						fType := strings.TrimPrefix(f.Type, "[]")
@@ -327,6 +342,12 @@ func (i *importer) queryImports(filename string) fileImports {
 				}
 			}
 			if !q.Arg.isEmpty() {
+				if q.Arg.Struct != nil {
+					fName := strings.TrimPrefix(q.Arg.Struct.FullName(), "[]")
+					if strings.HasPrefix(fName, name) {
+						return true
+					}
+				}
 				if q.Arg.EmitStruct() {
 					for _, f := range q.Arg.Struct.Fields {
 						fType := strings.TrimPrefix(f.Type, "[]")
@@ -423,6 +444,12 @@ func (i *importer) batchImports(filename string) fileImports {
 				continue
 			}
 			if q.hasRetType() {
+				if q.Ret.Struct != nil {
+					fName := strings.TrimPrefix(q.Ret.Struct.FullName(), "[]")
+					if strings.HasPrefix(fName, name) {
+						return true
+					}
+				}
 				if q.Ret.EmitStruct() {
 					for _, f := range q.Ret.Struct.Fields {
 						fType := strings.TrimPrefix(f.Type, "[]")
@@ -437,6 +464,12 @@ func (i *importer) batchImports(filename string) fileImports {
 				}
 			}
 			if !q.Arg.isEmpty() {
+				if q.Arg.Struct != nil {
+					fName := strings.TrimPrefix(q.Arg.Struct.FullName(), "[]")
+					if strings.HasPrefix(fName, name) {
+						return true
+					}
+				}
 				if q.Arg.EmitStruct() {
 					for _, f := range q.Arg.Struct.Fields {
 						fType := strings.TrimPrefix(f.Type, "[]")

@@ -80,6 +80,9 @@ func buildStructs(req *plugin.CodeGenRequest) []Struct {
 				if req.Settings.Go.EmitJsonTags {
 					tags["json"] = JSONTagName(column.Name, req.Settings)
 				}
+				// For Structs we don't want our enum's to have prefixes
+				pkg := req.Settings.Go.ModelPackage
+				req.Settings.Go.ModelPackage = ""
 				addExtraGoStructTags(tags, req, column)
 				s.Fields = append(s.Fields, Field{
 					Name:    StructName(column.Name, req.Settings),
@@ -87,6 +90,8 @@ func buildStructs(req *plugin.CodeGenRequest) []Struct {
 					Tags:    tags,
 					Comment: column.Comment,
 				})
+
+				req.Settings.Go.ModelPackage = pkg
 			}
 			structs = append(structs, s)
 		}
@@ -189,8 +194,8 @@ func buildQueries(req *plugin.CodeGenRequest, structs []Struct) ([]Query, error)
 				EmitPointer: req.Settings.Go.EmitParamsStructPointers,
 			}
 		}
-
 		if len(query.Columns) == 1 {
+
 			c := query.Columns[0]
 			name := columnName(c, 0)
 			if c.IsFuncCall {
@@ -213,7 +218,7 @@ func buildQueries(req *plugin.CodeGenRequest, structs []Struct) ([]Query, error)
 				for i, f := range s.Fields {
 					c := query.Columns[i]
 					sameName := f.Name == StructName(columnName(c, i), req.Settings)
-					sameType := f.Type == goType(req, c)
+					sameType := (f.Type == goType(req, c)) || (s.Package+"."+f.Type == goType(req, c))
 					sameTable := sdk.SameTableName(c.Table, &s.Table, req.Catalog.DefaultSchema)
 					if !sameName || !sameType || !sameTable {
 						same = false
@@ -239,7 +244,9 @@ func buildQueries(req *plugin.CodeGenRequest, structs []Struct) ([]Query, error)
 					return nil, err
 				}
 				emit = true
+				gs.Package = ""
 			}
+
 			gq.Ret = QueryValue{
 				Emit:        emit,
 				Name:        "i",
@@ -252,13 +259,15 @@ func buildQueries(req *plugin.CodeGenRequest, structs []Struct) ([]Query, error)
 		qs = append(qs, gq)
 	}
 	sort.Slice(qs, func(i, j int) bool { return qs[i].MethodName < qs[j].MethodName })
+
 	return qs, nil
 }
 
 // It's possible that this method will generate duplicate JSON tag values
 //
-//   Columns: count, count,   count_2
-//    Fields: Count, Count_2, Count2
+//	Columns: count, count,   count_2
+//	 Fields: Count, Count_2, Count2
+//
 // JSON tags: count, count_2, count_2
 //
 // This is unlikely to happen, so don't fix it yet
