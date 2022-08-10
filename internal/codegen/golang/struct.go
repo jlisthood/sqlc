@@ -16,6 +16,13 @@ type Struct struct {
 	Package string
 }
 
+func (s *Struct) FullName() string {
+	if s.Package != "" {
+		return s.Package + "." + s.Name
+	}
+	return s.Name
+}
+
 func StructName(name string, settings *plugin.Settings) string {
 	if rename := settings.Rename[name]; rename != "" {
 		return rename
