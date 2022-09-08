@@ -487,6 +487,7 @@ func (i *importer) batchImports(filename string) fileImports {
 	})
 
 	std["context"] = struct{}{}
+	std["errors"] = struct{}{}
 	pkg[ImportSpec{Path: "github.com/jackc/pgx/v4"}] = struct{}{}
 
 	return sortedImports(std, pkg)
