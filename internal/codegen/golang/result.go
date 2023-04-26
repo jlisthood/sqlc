@@ -10,6 +10,10 @@ import (
 	"github.com/kyleconroy/sqlc/internal/plugin"
 )
 
+const (
+	golangSliceSyntax = "[]"
+)
+
 func buildEnums(req *plugin.CodeGenRequest) []Enum {
 	var enums []Enum
 	for _, schema := range req.Catalog.Schemas {
@@ -218,7 +222,8 @@ func buildQueries(req *plugin.CodeGenRequest, structs []Struct) ([]Query, error)
 				for i, f := range s.Fields {
 					c := query.Columns[i]
 					sameName := f.Name == StructName(columnName(c, i), req.Settings)
-					sameType := (f.Type == goType(req, c)) || (s.Package+"."+f.Type == goType(req, c))
+
+					sameType := (f.Type == goType(req, c)) || (addPackagePrefixToType(s.Package, f.Type) == goType(req, c))
 					sameTable := sdk.SameTableName(c.Table, &s.Table, req.Catalog.DefaultSchema)
 					if !sameName || !sameType || !sameTable {
 						same = false
@@ -352,4 +357,11 @@ func checkIncompatibleFieldTypes(fields []Field) error {
 		}
 	}
 	return nil
+}
+
+func addPackagePrefixToType(pkg string, typ string) string {
+	if strings.HasPrefix(typ, golangSliceSyntax) {
+		return golangSliceSyntax + pkg + "." + typ[len(golangSliceSyntax):]
+	}
+	return pkg + "." + typ
 }
