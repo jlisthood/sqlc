@@ -298,7 +298,8 @@ func outputColumns(qc *QueryCatalog, node ast.Node) ([]*Column, error) {
 				continue
 			}
 			for _, f := range n.FromClause.Items {
-				if res := isTableRequired(f, col, tableRequired); res != tableNotFound {
+				res := isTableRequired(f, col, tableRequired)
+				if res != tableNotFound {
 					col.NotNull = res == tableRequired
 					break
 				}
@@ -318,10 +319,12 @@ const (
 func isTableRequired(n ast.Node, col *Column, prior int) int {
 	switch n := n.(type) {
 	case *ast.RangeVar:
-		if n.Alias == nil && *n.Relname == col.Table.Name {
-			return prior
+		tableMatch := *n.Relname == col.Table.Name
+		aliasMatch := true
+		if n.Alias != nil && col.TableAlias != "" {
+			aliasMatch = *n.Alias.Aliasname == col.TableAlias
 		}
-		if n.Alias != nil && *n.Alias.Aliasname == col.TableAlias && *n.Relname == col.Table.Name {
+		if aliasMatch && tableMatch {
 			return prior
 		}
 	case *ast.JoinExpr:
